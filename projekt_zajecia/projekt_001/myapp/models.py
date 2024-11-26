@@ -3,6 +3,8 @@ from django.db import models
 # Create your models here.
 class Stanowisko(models.Model):
     nazwa = models.CharField(max_length=100, blank=False)
+    verbose_name = 'Stanowisko'
+    verbose_name_plural = 'Stanowiska'
     opis = models.TextField(blank=True)  # opcjonalne pole opisu
 
     def __str__(self):
@@ -15,7 +17,8 @@ class Osoba(models.Model):
         ('M', 'Mezczyzna'),
         ('I', 'Inne'),
     )
-    
+    verbose_name = 'Osoba'
+    verbose_name_plural = 'Osoby'
     imie = models.CharField(max_length=60, blank=False)
     nazwisko = models.CharField(max_length=60, blank=False)
     plec = models.CharField(max_length=1, choices=plec_wybor)
