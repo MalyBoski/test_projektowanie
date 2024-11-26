@@ -1,6 +1,16 @@
 from django.db import models
 
 # Create your models here.
+# deklaracja statycznej listy wyboru do wykorzystania w klasie modelu
+MONTHS = models.IntegerChoices('Miesiace', 'Styczeń Luty Marzec Kwiecień Maj Czerwiec Lipiec Sierpień Wrzesień Październik Listopad Grudzień')
+
+SHIRT_SIZES = (
+        ('S', 'Small'),
+        ('M', 'Medium'),
+        ('L', 'Large'),
+    )
+
+
 class Stanowisko(models.Model):
     nazwa = models.CharField(max_length=100, blank=False)
     verbose_name = 'Stanowisko'
@@ -18,12 +28,34 @@ class Osoba(models.Model):
         ('I', 'Inne'),
     )
     verbose_name = 'Osoba'
-    verbose_name_plural = 'Osoby'
+    verbose_name_plural = 'kkaaksdaksrwekwjdowjew'
     imie = models.CharField(max_length=60, blank=False)
     nazwisko = models.CharField(max_length=60, blank=False)
     plec = models.CharField(max_length=1, choices=plec_wybor)
     stanowisko = models.ForeignKey(Stanowisko, on_delete=models.CASCADE)
+    rozmiar_koszulki = models.CharField(max_length=1, choices=SHIRT_SIZES, default=SHIRT_SIZES[0][0])
+    miesiac_dodany = models.IntegerField(choices=MONTHS.choices, default=MONTHS.choices[0][0])
+
 
     def __str__(self):
         return f"{self.imie} {self.nazwisko}"
     
+    
+
+class Team(models.Model):
+    imie = models.CharField(max_length=60)
+    panstwo = models.CharField(max_length=2)
+
+    def __str__(self):
+        return f"{self.name}"
+
+
+class Person(models.Model):
+
+    imie = models.CharField(max_length=60)
+    rozmiar_koszulki = models.CharField(max_length=1, choices=SHIRT_SIZES, default=SHIRT_SIZES[0][0])
+    miesiac_dodany = models.IntegerField(choices=MONTHS.choices, default=MONTHS.choices[0][0])
+    team = models.ForeignKey(Team, null=True, blank=True, on_delete=models.SET_NULL)
+
+    def __str__(self):
+        return self.name
