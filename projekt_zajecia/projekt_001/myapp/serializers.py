@@ -14,8 +14,8 @@ class PersonSerializer(serializers.Serializer):
     # zwróć uwagę na zapisywaną wartość do bazy dla default={wybór}[0] oraz default={wybór}[0][0]
     # w pliku models.py SHIRT_SIZES oraz MONTHS zostały wyniesione jako stałe do poziomu zmiennych skryptu
     # (nie wewnątrz modelu)
-    shirt_size = serializers.ChoiceField(choices=SHIRT_SIZES, default=SHIRT_SIZES[0][0])
-    miesiac_dodania = serializers.ChoiceField(choices=MONTHS.choices, default=MONTHS.choices[0][0])
+    rozmiar_koszulki = serializers.ChoiceField(choices=SHIRT_SIZES, default=SHIRT_SIZES[0][0])
+    month_added = serializers.ChoiceField(choices=MONTHS.choices, default=MONTHS.choices[0][0])
 
     # odzwierciedlenie pola w postaci klucza obcego
     # przy dodawaniu nowego obiektu możemy odwołać się do istniejącego poprzez inicjalizację nowego obiektu
@@ -32,8 +32,8 @@ class PersonSerializer(serializers.Serializer):
     def update(self, instance, validated_data):
         instance.pseudonim = validated_data.get('pseudonim', instance.pseudonim)
         instance.name = validated_data.get('name', instance.name)
-        instance.shirt_size = validated_data.get('shirt_size', instance.shirt_size)
-        instance.miesiac_dodania = validated_data.get('miesiac_dodania', instance.miesiac_dodania)
+        instance.rozmiar_koszulki = validated_data.get('rozmiar_koszulki', instance.rozmiar_koszulki)
+        instance.month_added = validated_data.get('month_added', instance.month_added)
         instance.team = validated_data.get('team', instance.team)
         instance.save()
         return instance
