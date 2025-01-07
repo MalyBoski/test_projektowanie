@@ -49,7 +49,7 @@ class Osoba(models.Model):
     
 
 class Team(models.Model):
-    imie = models.CharField(max_length=60)
+    name = models.CharField(max_length=60)
     panstwo = models.CharField(max_length=2)
 
     def __str__(self):

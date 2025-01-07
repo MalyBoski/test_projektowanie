@@ -4,7 +4,8 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from .models import Person, Team
 from .serializers import PersonSerializer
-
+from django.http import HttpResponse
+import datetime
 # określamy dostępne metody żądania dla tego endpointu
 @api_view(['GET'])
 def person_list(request):
@@ -48,3 +49,28 @@ def person_detail(request, pk):
     elif request.method == 'DELETE':
         person.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+def welcome_view(request):
+    now = datetime.datetime.now()
+    html = f"""
+        <html><body>
+        Witaj użytkowniku! </br>
+        Aktualna data i czas na serwerze: {now}.
+        </body></html>"""
+    return HttpResponse(html)
+
+def person_list_html(request):
+    # pobieramy wszystkie obiekty Person z bazy poprzez QuerySet
+    persons = Person.objects.all()
+    return render(request,
+                  "folder_aplikacji/person/list.html",
+                  {'persons': persons})
+
+def person_detail_html(request, id):
+    # pobieramy konkretny obiekt Person
+    person = Person.objects.get(id=id)
+
+    return render(request,
+                  "folder_aplikacji/person/detail.html",
+                  {'person': person})

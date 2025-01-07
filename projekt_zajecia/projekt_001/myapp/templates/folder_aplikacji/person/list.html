@@ -1,0 +1,11 @@
+{% extends "folder_aplikacji\base.html" %}
+
+{% block title %}Lista obiektów Person{% endblock %}
+
+{% block content %}
+Aktualnie w mojej bazie dodane są poniższe obiekty Person.
+{% for person in persons %}
+<p>Person: {{ person.name }}</p>
+<hr>
+{% endfor %}
+{% endblock %}
