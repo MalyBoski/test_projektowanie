@@ -1,13 +1,17 @@
 from django.shortcuts import render
 from rest_framework import status
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.response import Response
 from .models import Person, Team
 from .serializers import PersonSerializer
 from django.http import HttpResponse
+from rest_framework.authentication import SessionAuthentication, BasicAuthentication, TokenAuthentication
+from rest_framework.permissions import IsAuthenticated
 import datetime
 # określamy dostępne metody żądania dla tego endpointu
 @api_view(['GET'])
+@authentication_classes([SessionAuthentication, TokenAuthentication])
+@permission_classes([IsAuthenticated])
 def person_list(request):
     """
     Lista wszystkich obiektów modelu Person.
@@ -18,7 +22,8 @@ def person_list(request):
         return Response(serializer.data)
 
 
-@api_view(['GET', 'PUT', 'DELETE'])
+
+@api_view(['GET'])
 def person_detail(request, pk):
 
     """
@@ -39,7 +44,23 @@ def person_detail(request, pk):
         serializer = PersonSerializer(person)
         return Response(serializer.data)
 
-    elif request.method == 'PUT':
+
+@api_view(['PUT', 'DELETE'])
+@authentication_classes([SessionAuthentication, BasicAuthentication])
+@permission_classes([IsAuthenticated])
+def person_update_delete(request, pk):
+
+    """
+    :param request: obiekt DRF Request
+    :param pk: id obiektu Person
+    :return: Response (with status and/or object/s data)
+    """
+    try:
+        person = Person.objects.get(pk=pk)
+    except Person.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'PUT':
         serializer = PersonSerializer(person, data=request.data)
         if serializer.is_valid():
             serializer.save()
