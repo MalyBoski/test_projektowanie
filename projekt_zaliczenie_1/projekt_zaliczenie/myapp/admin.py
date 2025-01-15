@@ -2,9 +2,10 @@ from django.contrib import admin
 from .models import Stanowisko, Osoba, Produkt, User
 # Register your models here.
 class OsobaAdmin(admin.ModelAdmin):
-    readonly_fields = ('data_dodania',)
+    list_display = ['imie', 'nazwisko', 'stanowisko', 'data_dodania', 'miesiac']
+    list_filter = ['stanowisko', 'data_dodania', 'miesiac']
 
-admin.site.register(Osoba)
 admin.site.register(Stanowisko) 
 admin.site.register(Produkt)
 admin.site.register(User)
+admin.site.register(Osoba, OsobaAdmin)
