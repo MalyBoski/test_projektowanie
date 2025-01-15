@@ -31,7 +31,7 @@ class Osoba(models.Model):
         return f"{self.imie} {self.nazwisko}"
     
     class Meta:
-        ordering = ["nazwisko"]
+        ordering = ["nazwisko"] # jesli chcemy sortowac odwrotnie do alfabetycznie to -nazwisko
         verbose_name_plural = "Osoby"
 
 class Stanowisko(models.Model):
