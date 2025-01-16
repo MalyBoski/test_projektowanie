@@ -5,9 +5,44 @@ from.serializers import SongSerializer
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from.serializers import SongSerializer
+from.serializers import SongSerializer, UserSerializer
+from django.contrib.auth import authenticate
+from rest_framework.authtoken.models import Token
 # Create your views here.
+class CustomLoginView(APIView):
+    permission_classes = []
 
+    def post(self, request):
+        username = request.data.get('username')
+        password = request.data.get('password')
+
+        user = authenticate(username=username, password=password)
+        if user:
+
+            token, created = Token.objects.get_or_create(user=user)
+
+            songs = Song.objects.all()
+            songs_serializer = SongSerializer(songs, many=True)
+
+            return Response({
+                "message": f"Witaj, {username}",
+                'songs': songs_serializer.data
+            }, status=200)
+        return Response({"message": "Nieprawidłowe dane logowania"}, status=400)
+
+
+class RegisterView(APIView):
+    permission_classes = []
+    
+    def post(self, request):
+        serializer = UserSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(
+              {"message": "Użytkownik został zarejestrowany pomyślnie"},
+              status=status.HTTP_201_CREATED
+            )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 class SongViewSet(viewsets.ModelViewSet):
     queryset = Song.objects.all()
     serializer_class = SongSerializer
