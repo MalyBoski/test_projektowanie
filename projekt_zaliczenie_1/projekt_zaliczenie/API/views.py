@@ -11,9 +11,13 @@ from.serializers import SongSerializer
 class SongViewSet(viewsets.ModelViewSet):
     queryset = Song.objects.all()
     serializer_class = SongSerializer
+
 class SongList(generics.ListCreateAPIView):
     queryset = Song.objects.all()
     serializer_class = SongSerializer
+    model = Song
+    template_name = 'sklepmuzyczny/song_list.html'
+    context_object_name = 'songs'
 
 class CreateSongView(APIView):
     def post(self, request):
@@ -52,5 +56,8 @@ class deleteSongView(APIView):
         except Song.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
            
-
+def song_list_view(request):
+    songs = Song.objects.all()
+    context = {'songs': songs}
+    return render(request, 'sklepmuzyczny/song_list.html', context)
     

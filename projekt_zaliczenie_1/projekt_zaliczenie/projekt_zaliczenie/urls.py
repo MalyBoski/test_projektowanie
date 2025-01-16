@@ -18,8 +18,10 @@ from django.contrib import admin
 from django.urls import path, include
 from rest_framework import routers
 from API import urls as api_urls
+from API import views
 
 urlpatterns = [
+    path('view-template/', views.song_list_view, name='view-template'),
     path('admin/', admin.site.urls),
     path('API/', include('API.urls')),
 ]

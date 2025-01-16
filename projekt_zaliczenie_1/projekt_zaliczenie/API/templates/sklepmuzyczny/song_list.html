@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Song List</title>
+</head>
+<body>
+    <h1>Available Songs</h1>
+    <ul>
+        {% for song in songs %}
+            <li>
+                <strong>{{ song.title }}</strong> by {{ song.artist }}
+                {% if song.album %}
+                    <em>(Album: {{ song.album }})</em>
+                {% endif %}
+                {% if song.genre %}
+                <span>Genre: {{ song.genre }}</span>
+                {% endif %}
+                <span>{{ song.release_date }}</span>
+            </li>
+        {% endfor %}
+    </ul>
+</body>
+</html>

@@ -2,7 +2,7 @@ from django.urls import path, include
 from rest_framework import routers
 from rest_framework.routers import DefaultRouter
 from.views import SongList, CreateSongView, BuySongView, UpdateASongView, deleteSongView, SongViewSet
-
+from . import views
 
 router = DefaultRouter()
 router.register(r'songs', SongViewSet, basename='song')
