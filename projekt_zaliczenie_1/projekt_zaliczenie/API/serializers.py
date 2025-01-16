@@ -1,6 +1,11 @@
 from rest_framework import serializers
-from .models import Osoba, Stanowisko, MONTHS, SHIRT_SIZES, plec, Produkt, User
+from .models import Osoba, Stanowisko, MONTHS, SHIRT_SIZES, plec, Produkt, User, Song
 
+
+class SongSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Song 
+        fields = ('id', 'title', 'artist', 'album', 'release_date', 'genre')
 
 class OsobaSerializer(serializers.Serializer):
 

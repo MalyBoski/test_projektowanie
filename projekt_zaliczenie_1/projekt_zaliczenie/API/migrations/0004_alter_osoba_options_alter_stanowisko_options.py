@@ -6,7 +6,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('myapp', '0003_osoba_stanowisko_delete_person_delete_team_and_more'),
+        ('API', '0003_osoba_stanowisko_delete_person_delete_team_and_more'),
     ]
 
     operations = [
