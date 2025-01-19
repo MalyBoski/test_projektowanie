@@ -30,7 +30,6 @@ class CustomLoginView(APIView):
             }, status=200)
         return Response({"message": "Nieprawidłowe dane logowania"}, status=400)
 
-
 class RegisterView(APIView):
     permission_classes = []
     
@@ -43,6 +42,7 @@ class RegisterView(APIView):
               status=status.HTTP_201_CREATED
             )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
 class SongViewSet(viewsets.ModelViewSet):
     queryset = Song.objects.all()
     serializer_class = SongSerializer
@@ -61,6 +61,7 @@ class CreateSongView(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
 class BuySongView(APIView):
     def get(self, request, pk):
         try:
