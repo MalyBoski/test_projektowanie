@@ -112,7 +112,7 @@ def song_list_view(request):
 
 def album_list(request):
     albums = Album.objects.all()
-    album_data = [{"id": album.id, "name": album.name, "artist": album.artist} for album in albums]
+    album_data = [{"id": album.id, "name": album.title, "artist": album.artist} for album in albums]
     return JsonResponse(album_data, safe=False)
 
 
@@ -124,11 +124,18 @@ class AlbumViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return Album.objects.all()
 
-@login_required
-def cart_view(request):
-    user = request.user
-    cart_items = Cart.objects.filter(user=user)
-    return render(request, 'cart.html', {'cart_items': cart_items})
+class CartView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        if not request.user.is_authenticated:
+            return Response({"detail": "Użytkownik musi być zalogowany"}, status=401)
+
+        user = request.user
+        cart_items = Cart.objects.filter(user=user)
+        serializer = CartSerializer(cart_items, many=True)
+        return Response(serializer.data)
+
 
 
 def add_to_cart(request, album_id):

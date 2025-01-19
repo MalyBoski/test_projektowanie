@@ -2,7 +2,7 @@ from django.urls import path, include
 from rest_framework import routers
 from rest_framework.routers import DefaultRouter
 from rest_framework.authtoken.views import obtain_auth_token
-from.views import SongList, CreateSongView, BuySongView, UpdateASongView, deleteSongView, SongViewSet, RegisterView, CustomLoginView, CartViewSet, AlbumViewSet
+from.views import SongList, CreateSongView, BuySongView, UpdateASongView, deleteSongView, SongViewSet, RegisterView, CustomLoginView, CartView, AlbumViewSet
 from . import views
 
 #router = DefaultRouter()
@@ -12,7 +12,7 @@ from . import views
 
 urlpatterns = [
     #path('api/', include(router.urls)), #
-    path('cart/', views.cart_view, name='cart'),
+    path('cart/', CartView.as_view(), name='cart'),
     path('cart/add/<int:album_id>/', views.add_to_cart, name='add_to_cart'),
     path('albums/', views.album_list, name='album_list'),
     #path('', include(router.urls)), #
