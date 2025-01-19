@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User, Song
+from .models import User, Song, Album, Cart
 from django.contrib.auth.models import User
 
 class UserSerializer(serializers.ModelSerializer):
@@ -22,3 +22,17 @@ class SongSerializer(serializers.ModelSerializer):
     class Meta:
         model = Song 
         fields = ('id', 'title', 'artist', 'album', 'release_date', 'genre')
+
+
+class AlbumSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Album
+        fields = ['id', 'title', 'artist', 'release_date', 'genre']
+
+
+class CartSerializer(serializers.ModelSerializer):
+    album = serializers.StringRelatedField()
+
+    class Meta:
+        model = Cart
+        fields = ['user', 'album', 'quantity', 'added_at']

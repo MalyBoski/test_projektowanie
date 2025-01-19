@@ -1,13 +1,18 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from rest_framework import generics, viewsets
-from.models import Song
-from.serializers import SongSerializer
+from.models import Song, Album, Cart
+from.serializers import SongSerializer, CartSerializer
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from.serializers import SongSerializer, UserSerializer
+from.serializers import SongSerializer, UserSerializer, AlbumSerializer
 from django.contrib.auth import authenticate
 from rest_framework.authtoken.models import Token
+from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
+from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required
+from django.http import HttpResponseForbidden
+
 # Create your views here.
 class CustomLoginView(APIView):
     permission_classes = []
@@ -97,3 +102,45 @@ def song_list_view(request):
     context = {'songs': songs}
     return render(request, 'sklepmuzyczny/song_list.html', context)
     
+
+def album_list(request):
+    albums = Album.objects.all()
+    album_data = [{"id": album.id, "name": album.name, "artist": album.artist} for album in albums]
+    return JsonResponse(album_data, safe=False)
+
+
+class AlbumViewSet(viewsets.ModelViewSet):
+    queryset = Album.objects.all()
+    serializer_class = AlbumSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
+    def get_queryset(self):
+        return Album.objects.all()
+
+@login_required
+def cart_view(request):
+    user = request.user
+    cart_items = Cart.objects.filter(user=user)
+    return render(request, 'cart.html', {'cart_items': cart_items})
+
+
+def add_to_cart(request, album_id):
+    album = Album.objects.get(id=album_id)
+    user = request.user
+
+    cart_item, created = Cart.objects.get_or_create(user=user, album=album)
+
+    if not created:
+        cart_item.quantity += 1
+        cart_item.save()
+
+    return redirect('cart')
+
+
+class CartViewSet(viewsets.ModelViewSet):
+    queryset = Cart.objects.all()
+    serializer_class = CartSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Cart.objects.filter(user=self.request.user)
