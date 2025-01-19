@@ -6,8 +6,8 @@ class AlbumAdmin(admin.ModelAdmin):
     list_filter = ['artist', 'release_date', 'genre']
 
 class SongAdmin(admin.ModelAdmin):
-    list_display = ['title', 'artist', 'album', 'release_date', 'genre']
-    list_filter = ['title', 'artist', 'album', 'release_date', 'genre']
+    list_display = ['id','title', 'artist', 'album', 'release_date', 'genre']
+    list_filter = ['id','title', 'artist', 'album', 'release_date', 'genre']
     
 class CartAdmin(admin.ModelAdmin):
     list_display = ('user', 'album', 'quantity', 'added_at') 
