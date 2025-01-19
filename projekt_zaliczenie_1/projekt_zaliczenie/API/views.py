@@ -8,9 +8,12 @@ from rest_framework.views import APIView
 from.serializers import SongSerializer, UserSerializer
 from django.contrib.auth import authenticate
 from rest_framework.authtoken.models import Token
+from rest_framework.permissions import IsAdminUser, IsAuthenticated
+import logging
+logger = logging.getLogger(__name__)
 # Create your views here.
 class CustomLoginView(APIView):
-    permission_classes = []
+    permission_classes = [IsAuthenticated]
 
     def post(self, request):
         username = request.data.get('username')
@@ -55,13 +58,17 @@ class SongList(generics.ListCreateAPIView):
     context_object_name = 'songs'
 
 class CreateSongView(APIView):
+    permission_classes = [IsAdminUser]
+    
     def post(self, request):
+        logger.info(f"Użytkownik: {request.user}, is_staff: {request.user.is_staff}")
+        logger.info(f"Metoda: {request.method}")
         serializer = SongSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
+
 class BuySongView(APIView):
     def get(self, request, pk):
         try:
@@ -78,7 +85,7 @@ class UpdateASongView(APIView):
             serializer = SongSerializer(song, data=request.data)
             if serializer.is_valid():
                 serializer.save()
-                return Response(serializer.data)
+                return Response({"message": "Pomyślnie zaktualizowano utwór"}, status=200)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Song.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
@@ -88,7 +95,7 @@ class deleteSongView(APIView):
         try:
             song = Song.objects.get(pk=pk)
             song.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
+            return Response({"message": "Pomyślnie usunięto utwór"}, status=204)
         except Song.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
            

@@ -24,5 +24,4 @@ urlpatterns = [
     path('view-template/', views.song_list_view, name='view-template'),
     path('admin/', admin.site.urls),
     path('API/', include('API.urls')),
-    path('API/', include(api_urls)),
 ]

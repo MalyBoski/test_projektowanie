@@ -19,3 +19,4 @@ class Song(models.Model):
     def __str__(self):
         return self.title
     
+# zrobic koszyk i album jako dziedziczenie klasy z Song 
