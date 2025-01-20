@@ -151,7 +151,7 @@ class CartView(APIView):
         }, status=200) 
 
 # Dodawanie do koszyka
-def add_to_cart(request, title):
+def add_to_cart(request, name):
     album = Album.objects.get(title=name)
     user = User.objects.get(username=request.user)
 
@@ -162,6 +162,19 @@ def add_to_cart(request, title):
         cart_item.save()
 
     return redirect('cart')
+
+# Wyswietlanie dla biedakow
+
+class DlaBiedakow(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+
+        cheap_albums = Album.objects.filter(price__lt=20)
+
+        data = [{"id": album.id, "title": album.title, "price": album.price} for album in cheap_albums]
+        return Response(data, status=200)
+
 
 # Wyswietlanie albumow po literze
 

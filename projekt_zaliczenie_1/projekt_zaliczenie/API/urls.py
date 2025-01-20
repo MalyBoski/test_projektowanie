@@ -1,5 +1,5 @@
 from django.urls import path 
-from.views import CreateSongView, UpdateASongView, deleteSongView, RegisterView, CustomLoginView, CartView, AlbumsByLetterView, AllOrderView, PurchaseView, CreateOrderView, OrderDetailView, main_page_view, song_list_view
+from.views import CreateSongView, UpdateASongView, deleteSongView, RegisterView, CustomLoginView, CartView, AlbumsByLetterView, AllOrderView, PurchaseView, CreateOrderView, OrderDetailView, main_page_view, song_list_view, DlaBiedakow
 from . import views
 
 urlpatterns = [
@@ -15,6 +15,7 @@ urlpatterns = [
     path('login/', CustomLoginView.as_view(), name='login'),
     path('main/', main_page_view, name='main_page'),  
     path('songs/', song_list_view, name='song_list'),
+    path('dlabiedakow/', DlaBiedakow.as_view(), name='dlabiedakow'),
     # Admin opcje
     # Mozliwosc wybierania zamowien z okreslonej daty
     # http://127.0.0.1:8000//API/orders/all/?start_date=rok-miesiac-dzien&end_date=rok-miesiac-dzien    (np. 2023-01-31)

@@ -44,10 +44,6 @@ class Cart(models.Model):
     def total_price(self):
         return self.album.price * self.quantity 
     
-    @classmethod
-    def total_cart_price(cls, user):
-        carts = cls.objects.filter(user=user)
-        return sum(cart.total_price() for cart in carts)
 
 class Order(models.Model):
     class Status(models.TextChoices):
