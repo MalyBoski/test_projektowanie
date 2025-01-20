@@ -38,7 +38,7 @@ class CustomLoginView(APIView):
             return Response({
                 "message": f"Witaj, {username}",
                 'songs': songs_serializer.data,
-                "token": token.key  # Include the token in the response
+                "token": token.key  
             }, status=200)
         return Response({"message": "Nieprawidłowe dane logowania"}, status=400)
 
@@ -153,14 +153,20 @@ class CartView(APIView):
         if not created:
             cart_item.quantity += 1
             cart_item.save()
+        
+        total_cart_price = Cart.total_cart_price(request.user)
 
         return Response({"message": f"Dodano {album.title} do koszyka", "quantity": cart_item.quantity}, status=201)
 
     def get(self, request):
         user = request.user 
         cart_items = Cart.objects.filter(user=user)  
-        serializer = CartSerializer(cart_items, many=True)  
-        return Response(serializer.data, status=200)  
+        serializer = CartSerializer(cart_items, many=True)
+        total_cart_price = Cart.total_cart_price(user)  
+        return Response({
+            "cart_items": serializer.data,
+            "total_price": total_cart_price
+        }, status=200) 
 
 
 def add_to_cart(request, album_id):
@@ -183,3 +189,31 @@ class CartViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         return Cart.objects.filter(user=self.request.user)
+
+class AlbumsByLetterView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get (self, request, letter):
+        albums = Album.objects.filter(title__istartswith=letter)
+
+        data =[{"id": album.id, "title": album.title, "price": album.price} for album in albums]
+        return Response(data, status=200) 
+
+class AllOrderView(APIView):
+    permission_classes = [IsAdminUser]
+
+    def get (self, request):
+
+        carts = Cart.objects.select_related('user', 'album').all()
+
+
+        data = []
+        for cart in carts:
+            data.append({
+                "user": cart.user.username,
+                "album": cart.album.title,
+                "quantity": cart.quantity, 
+                "added_at": cart.added_at.strftime("%Y-%m-%d %H:%M:%S"),
+                "total_price": cart.album.price * cart.quantity
+            })
+        return Response(data, status=200)

@@ -31,7 +31,7 @@ class Song(models.Model):
         return self.title
     
 
-class Cart(models.Model):
+class Cart(models.Model):   
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='carts') 
     album = models.ForeignKey(Album, on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField(default=1)
@@ -43,3 +43,8 @@ class Cart(models.Model):
 
     def total_price(self):
         return self.album.price * self.quantity 
+    
+    @classmethod
+    def total_cart_price(cls, user):
+        carts = cls.objects.filter(user=user)
+        return sum(cart.total_price() for cart in carts)
