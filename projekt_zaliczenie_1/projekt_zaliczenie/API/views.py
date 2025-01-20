@@ -17,9 +17,7 @@ from django.contrib.auth import get_user_model
 from django.utils import timezone
 User = get_user_model()
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
-import logging
-from django.views.decorators.csrf import csrf_exempt
-logger = logging.getLogger(__name__)
+from django.shortcuts import get_object_or_404
 # Create your views here.
 class CustomLoginView(APIView):
     permission_classes = []
@@ -39,8 +37,7 @@ class CustomLoginView(APIView):
             return Response({
                 "message": f"Witaj, {username}",
                 'songs': songs_serializer.data,
-                "token": token.key  
-            }, status=200)
+                "token": token.key  }, status=200)
         return Response({"message": "Nieprawidłowe dane logowania"}, status=400)
 
 class RegisterView(APIView):
@@ -78,17 +75,6 @@ class CreateSongView(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-class BuySongView(APIView):
-
-    permission_classes = [IsAuthenticated]
-    def get(self, request, pk):
-        try:
-            song = Song.objects.get(pk=pk)
-            serializer = SongSerializer(song)
-            return Response(serializer.data) 
-        except Song.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
 
 class UpdateASongView(APIView):
     permission_classes = [IsAdminUser]
@@ -137,14 +123,13 @@ class CartView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        logger.info(f"Typ request.user: {type(request.user)}, Wartość: {request.user}")
         
-        album_id = request.data.get('album_id')
-        if not album_id:
+        name = request.data.get('name')
+        if not name:
             return Response({"error": "Album ID jest wymagane"}, status=400)
 
         try:
-            album = Album.objects.get(id=album_id)
+            album = Album.objects.get(title=name)
         except Album.DoesNotExist:
             return Response({"error": "Album nie istnieje"}, status=404)
 
@@ -169,8 +154,8 @@ class CartView(APIView):
         }, status=200) 
 
 
-def add_to_cart(request, album_id):
-    album = Album.objects.get(id=album_id)
+def add_to_cart(request, title):
+    album = Album.objects.get(title=name)
     user = User.objects.get(username=request.user)
 
     cart_item, created = Cart.objects.get_or_create(user=user, album=album)
@@ -200,23 +185,41 @@ class AlbumsByLetterView(APIView):
         return Response(data, status=200) 
 
 class AllOrderView(APIView):
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAdminUser]  
 
-    def get (self, request):
-
-        carts = Cart.objects.select_related('user', 'album').all()
-
+    def get(self, request):
+        orders = Order.objects.select_related('user').all()  
 
         data = []
-        for cart in carts:
+        for order in orders:
+        
+            order_albums = order.orderalbum_set.select_related('album').all()
+            albums_data = [
+                {
+                    "album_title": order_album.album.title,
+                    "quantity": order_album.quantity,
+                    "price_per_item": float(order_album.album.price),
+                    "total_price": float(order_album.album.price * order_album.quantity),
+                }
+                for order_album in order_albums
+            ]
+            
+            
             data.append({
-                "user": cart.user.username,
-                "album": cart.album.title,
-                "quantity": cart.quantity, 
-                "added_at": cart.added_at.strftime("%Y-%m-%d %H:%M:%S"),
-                "total_price": cart.album.price * cart.quantity
+                "user": {
+                    "username": order.user.username, 
+                },
+                "order_id": order.id,
+                "status": order.get_status_display(),
+                "total_price": float(order.total_price),
+                "order_date": order.order_date.strftime("%Y-%m-%d %H:%M:%S"),
+                "shipping_address": order.shipping_address,
+                "albums": albums_data,
             })
+
         return Response(data, status=200)
+
+
 
 class PurchaseView(APIView):
     authentication_classes = [TokenAuthentication]
@@ -231,47 +234,63 @@ class PurchaseView(APIView):
 
         total_price = sum(item.album.price * item.quantity for item in cart_items)
 
+
+        order = Order.objects.create(
+            user=user,
+            total_price=total_price,
+            status="PENDING",  
+            order_date=timezone.now(),
+            shipping_address=request.data.get('shipping_address', ''),  
+        )
+
+        for cart_item in cart_items:
+            OrderAlbum.objects.create(
+                order=order,
+                album=cart_item.album,
+                quantity=cart_item.quantity,
+            )
         cart_items.delete()
 
         return render(request, "sklepmuzyczny/thank_you.html", {"total_price": total_price})
 
-@login_required
-def create_order(request):
-    if not request.user.is_authenticated:
-        return JsonResponse({'error': 'You must be logged in to create an order'}, status=403)
-    
-    user = request.user
-    carts = Cart.objects.filter(user=user)
 
-    if not carts.exists():
-        return redirect('cart')
+class CreateOrderView(APIView):
+    permission_classes = [IsAuthenticated]
 
-    total_price = sum(cart.total_price() for cart in carts)
+    def post(self, request):
+        user = request.user
+        carts = Cart.objects.filter(user=user)
 
-    order = Order.objects.create(
-        user=user,
-        total_price=total_price,
-        status=Order.Status.PENDING,  
-        order_date=timezone.now(),
-        shipping_address=request.data.get('shipping_address', ''),
-    )
+        if not carts.exists():
+            return Response({"error": "Koszyk jest pusty!"}, status=400)
 
-    for cart in carts:
-        OrderAlbum.objects.create(
-            order=order,
-            album=cart.album,
-            quantity=cart.quantity,
+        total_price = sum(cart.album.price * cart.quantity for cart in carts)
+
+        order = Order.objects.create(
+            user=user,
+            total_price=total_price,
+            status="PENDING",
+            order_date=timezone.now(),
+            shipping_address=request.data.get('shipping_address', ''),
         )
 
-    carts.delete()
+        for cart in carts:
+            OrderAlbum.objects.create(
+                order=order,
+                album=cart.album,
+                quantity=cart.quantity,
+            )
 
-    return redirect('order_detail', order_id=order.id)
+        carts.delete()
 
+        return Response({"message": "Zamówienie zostało utworzone", "order_id": order.id}, status=201)
 
-def order_detail(request, order_id):
+class OrderDetailView(APIView):
     permission_classes = [IsAuthenticated]
-    order = Order.objects.get(id=order_id)
-    return render(request, 'API/order_detail.html', {'order': order})
+
+    def get(self, request, order_id):
+        order = get_object_or_404(Order, id=order_id)
+        return render(request, 'sklepmuzyczny/order_detail.html', {'order': order})
 
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
