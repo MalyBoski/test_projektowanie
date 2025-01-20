@@ -16,7 +16,6 @@ from django.http import HttpResponseForbidden
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
-
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 import logging
 logger = logging.getLogger(__name__)
@@ -149,7 +148,6 @@ class CartView(APIView):
         except Album.DoesNotExist:
             return Response({"error": "Album nie istnieje"}, status=404)
 
-        # Użycie instancji request.user bez dodatkowego zapytania do bazy
         cart_item, created = Cart.objects.get_or_create(user=request.user, album=album)
         
         if not created:
