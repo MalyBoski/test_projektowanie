@@ -3,12 +3,13 @@ from.views import CreateSongView, UpdateASongView, deleteSongView, RegisterView,
 from . import views
 
 urlpatterns = [
-    # Uzytkownika opcje (basic user)
+    path('orders/user/', UserOrdersView.as_view(), name='user_orders'),
+    path('order/last/', LastOrderView.as_view(), name='last_order'),
     path('create_order/', CreateOrderView.as_view(), name='create_order'),
     path('order/<int:order_id>/', OrderDetailView.as_view(), name='order_detail'),
-    path('cart/purchase/', PurchaseView.as_view(), name="cart-purchase"),
+    path('order/purchase/', PurchaseView.as_view(), name="order-purchase"),
     path('cart/', CartView.as_view(), name='cart'), 
-    path('cart/add/', CartView.as_view(), name='add_to_cart'),
+    path('cart/add/', AddToCartView.as_view(), name='add_to_cart'),
     path('albums/', views.album_list, name='album_list'),
     path('albums/by-letter/<str:letter>/', AlbumsByLetterView.as_view(), name='albums-by-letter'),
     path('register/', RegisterView.as_view(), name='register'),
