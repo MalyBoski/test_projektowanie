@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista Zamówień</title>
+</head>
+<body>
+    <h1>Lista Zamówień</h1>
+
+    {% if orders %}
+        <table border="1" cellpadding="5" cellspacing="0">
+            <thead>
+                <tr>
+                    <th>ID Zamówienia</th>
+                    <th>Użytkownik</th>
+                    <th>Status</th>
+                    <th>Data Zamówienia</th>
+                    <th>Całkowita Cena</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in orders %}
+                <tr>
+                    <td>{{ order.id }}</td>
+                    <td>{{ order.user.username }}</td>
+                    <td>{{ order.get_status_display }}</td>
+                    <td>{{ order.order_date }}</td>
+                    <td>{{ order.total_price }} PLN</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>Brak zamówień w wybranym zakresie dat.</p>
+    {% endif %}
+</body>
+</html>
