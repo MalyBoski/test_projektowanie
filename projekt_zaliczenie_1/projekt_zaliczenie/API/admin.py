@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import CustomUser, Song, Album, Cart
+from .models import CustomUser, Song, Album, Cart, Order, OrderAlbum
 from django.contrib.auth.admin import UserAdmin
 
 class CustomUserAdmin(UserAdmin):
@@ -34,9 +34,16 @@ class CartAdmin(admin.ModelAdmin):
     list_filter = ('user', 'album') 
     search_fields = ('user__name', 'album__title')
 
+@admin.register(Order)
+class OrderAdmin(admin.ModelAdmin):
+    list_display = ('id', 'user', 'total_price', 'status', 'order_date')
+    list_filter = ('status',)
+    search_fields = ('user__username',)
+
 admin.site.register(CustomUser, CustomUserAdmin)
 admin.site.site_header = "Panel administracyjny"
 admin.site.site_title = "Panel administracyjny"
 admin.site.register(Song, SongAdmin)
 admin.site.register(Album, AlbumAdmin)
 admin.site.register(Cart, CartAdmin)
+admin.site.register(OrderAlbum)

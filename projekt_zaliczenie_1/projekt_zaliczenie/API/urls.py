@@ -11,6 +11,8 @@ from . import views
 #router.register(r'albums', AlbumViewSet, basename='album')
 
 urlpatterns = [
+    path('create_order/', views.create_order, name='create_order'),
+    path('order/<int:order_id>/', views.order_detail, name='order_detail'),
     path("cart/purchase/", PurchaseView.as_view(), name="cart-purchase"),
     #path('api/', include(router.urls)), #
     path('cart/', CartView.as_view(), name='cart'),

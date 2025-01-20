@@ -1,7 +1,7 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from rest_framework import generics, viewsets
-from.models import Song, Album, Cart, CustomUser
-from.serializers import SongSerializer, CartSerializer
+from.models import Song, Album, Cart, CustomUser, Order, OrderAlbum
+from.serializers import SongSerializer, CartSerializer, OrderSerializer
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -12,12 +12,13 @@ from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnl
 from rest_framework.authentication import TokenAuthentication
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponseForbidden
+from django.http import HttpResponseForbidden, HttpResponse
 from django.contrib.auth import get_user_model
-
+from django.utils import timezone
 User = get_user_model()
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 import logging
+from django.views.decorators.csrf import csrf_exempt
 logger = logging.getLogger(__name__)
 # Create your views here.
 class CustomLoginView(APIView):
@@ -233,3 +234,45 @@ class PurchaseView(APIView):
         cart_items.delete()
 
         return render(request, "sklepmuzyczny/thank_you.html", {"total_price": total_price})
+
+@login_required
+def create_order(request):
+    if not request.user.is_authenticated:
+        return JsonResponse({'error': 'You must be logged in to create an order'}, status=403)
+    
+    user = request.user
+    carts = Cart.objects.filter(user=user)
+
+    if not carts.exists():
+        return redirect('cart')
+
+    total_price = sum(cart.total_price() for cart in carts)
+
+    order = Order.objects.create(
+        user=user,
+        total_price=total_price,
+        status=Order.Status.PENDING,  
+        order_date=timezone.now(),
+        shipping_address=request.data.get('shipping_address', ''),
+    )
+
+    for cart in carts:
+        OrderAlbum.objects.create(
+            order=order,
+            album=cart.album,
+            quantity=cart.quantity,
+        )
+
+    carts.delete()
+
+    return redirect('order_detail', order_id=order.id)
+
+
+def order_detail(request, order_id):
+    permission_classes = [IsAuthenticated]
+    order = Order.objects.get(id=order_id)
+    return render(request, 'API/order_detail.html', {'order': order})
+
+class OrderViewSet(viewsets.ModelViewSet):
+    queryset = Order.objects.all()
+    serializer_class = OrderSerializer

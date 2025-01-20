@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Szczegóły zamówienia</title>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+</head>
+<body>
+    <h1>Szczegóły zamówienia</h1>
+    
+    <h2>Zamówienie #{{ order.id }}</h2>
+    
+    <p><strong>Status:</strong> {{ order.get_status_display }}</p>  <!-- Używamy get_status_display, aby wyświetlić przyjazną nazwę statusu -->
+    <p><strong>Data zamówienia:</strong> {{ order.order_date }}</p>
+    <p><strong>Użytkownik:</strong> {{ order.user.username }}</p>
+    <p><strong>Adres wysyłki:</strong> {{ order.shipping_address }}</p>
+    
+    <h3>Albumy w zamówieniu:</h3>
+    <ul>
+        {% for order_album in order.orderalbum_set.all %}
+            <li>
+                <strong>{{ order_album.album.title }}</strong> ({{ order_album.quantity }} szt.)
+                - {{ order_album.album.price|floatformat:2 }} zł
+            </li>
+        {% endfor %}
+    </ul>
+
+    <p><strong>Całkowita cena zamówienia:</strong> {{ order.total_price|floatformat:2 }} zł</p>
+
+    <a href="{% url 'home' %}">Powrót do strony głównej</a>
+</body>
+</html>
