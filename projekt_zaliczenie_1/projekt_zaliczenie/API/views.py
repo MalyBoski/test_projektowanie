@@ -68,8 +68,6 @@ class CreateSongView(APIView):
     permission_classes = [IsAdminUser]
     
     def post(self, request):
-        logger.info(f"Użytkownik: {request.user}, is_staff: {request.user.is_staff}")
-        logger.info(f"Metoda: {request.method}")
         serializer = SongSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -122,49 +120,34 @@ class CartView(APIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
 
+    def get(self, request):
+        user = request.user
+        cart_items = Cart.objects.filter(user=user)
+        total_price = sum(item.album.price for item in cart_items)
+
+        return Response({
+            "cart_items": [{"album": item.album.title, "price": item.album.price} for item in cart_items],
+            "total_price": total_price
+        }, status=200)
+    
+class AddToCartView(APIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
     def post(self, request):
-        
-        name = request.data.get('name')
-        if not name:
-            return Response({"error": "Album ID jest wymagane"}, status=400)
+        user = request.user
+        album_name = request.data.get("name")
+
+        if not album_name:
+            return Response({"error": "Nazwa albumu jest wymagana"}, status=400)
 
         try:
-            album = Album.objects.get(title=name)
+            album = Album.objects.get(title=album_name)
         except Album.DoesNotExist:
-            return Response({"error": "Album nie istnieje"}, status=404)
+            return Response({"error": "Nie znaleziono albumu"}, status=404)
 
-        cart_item, created = Cart.objects.get_or_create(user=request.user, album=album)
-        
-        if not created:
-            cart_item.quantity += 1
-            cart_item.save()
-        
-        total_cart_price = Cart.total_cart_price(request.user)
-
-        return Response({"message": f"Dodano {album.title} do koszyka", "quantity": cart_item.quantity}, status=201)
-
-    def get(self, request):
-        user = request.user 
-        cart_items = Cart.objects.filter(user=user)  
-        serializer = CartSerializer(cart_items, many=True)
-        total_cart_price = Cart.total_cart_price(user)  
-        return Response({
-            "cart_items": serializer.data,
-            "total_price": total_cart_price
-        }, status=200) 
-
-
-def add_to_cart(request, title):
-    album = Album.objects.get(title=name)
-    user = User.objects.get(username=request.user)
-
-    cart_item, created = Cart.objects.get_or_create(user=user, album=album)
-
-    if not created:
-        cart_item.quantity += 1
-        cart_item.save()
-
-    return redirect('cart')
+        Cart.objects.create(user=user, album=album)
+        return Response({"message": f"Album '{album.title}' został dodany do koszyka"}, status=201)
 
 
 class CartViewSet(viewsets.ModelViewSet):
@@ -227,31 +210,22 @@ class PurchaseView(APIView):
 
     def post(self, request):
         user = request.user
-        cart_items = Cart.objects.filter(user=user)
 
-        if not cart_items.exists():
-            return Response({"error": "Koszyk jest pusty!"}, status=400)
+        order = Order.objects.filter(user=user, status="PENDING").first()
 
-        total_price = sum(item.album.price * item.quantity for item in cart_items)
+        if not order:
+            return Response({"error": "Brak otwartego zamówienia do przetworzenia"}, status=400)
 
+        order.status = "COMPLETED" 
+        order.save()
 
-        order = Order.objects.create(
-            user=user,
-            total_price=total_price,
-            status="PENDING",  
-            order_date=timezone.now(),
-            shipping_address=request.data.get('shipping_address', ''),  
-        )
+        return Response({
+            "message": "Zakup zakończony pomyślnie",
+            "order_id": order.id,
+            "total_price": float(order.total_price),
+            "status": order.status
+        }, status=200)
 
-        for cart_item in cart_items:
-            OrderAlbum.objects.create(
-                order=order,
-                album=cart_item.album,
-                quantity=cart_item.quantity,
-            )
-        cart_items.delete()
-
-        return render(request, "sklepmuzyczny/thank_you.html", {"total_price": total_price})
 
 
 class CreateOrderView(APIView):
@@ -295,3 +269,43 @@ class OrderDetailView(APIView):
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
+
+class LastOrderView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        last_order = Order.objects.filter(user=user).order_by('-order_date').first()
+        
+        if not last_order:
+            return Response({"error": "Nie znaleziono zamówień"}, status=404)
+
+        return Response({
+            "order_id": last_order.id,
+            "status": last_order.get_status_display(),
+            "total_price": float(last_order.total_price),
+            "order_date": last_order.order_date.strftime("%Y-%m-%d %H:%M:%S"),
+            "shipping_address": last_order.shipping_address,
+        }, status=200)
+    
+class UserOrdersView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        orders = Order.objects.filter(user=user).order_by('-order_date')
+        
+        if not orders.exists():
+            return Response({"error": "Nie znaleziono zamówień"}, status=404)
+
+        data = [
+            {
+                "order_id": order.id,
+                "status": order.get_status_display(),
+                "total_price": float(order.total_price),
+                "order_date": order.order_date.strftime("%Y-%m-%d %H:%M:%S"),
+                "shipping_address": order.shipping_address,
+            }
+            for order in orders
+        ]
+        return Response(data, status=200)

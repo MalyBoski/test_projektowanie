@@ -1,14 +1,16 @@
 from django.urls import path, include
 from rest_framework.authtoken.views import obtain_auth_token
-from.views import SongList, CreateSongView, UpdateASongView, deleteSongView, SongViewSet, RegisterView, CustomLoginView, CartView, AlbumViewSet, AlbumsByLetterView, AllOrderView, PurchaseView, CreateOrderView, OrderDetailView
+from.views import SongList, CreateSongView, UpdateASongView, deleteSongView, SongViewSet, RegisterView, CustomLoginView, CartView, AlbumViewSet, AlbumsByLetterView, AllOrderView, PurchaseView, CreateOrderView, OrderDetailView, LastOrderView, UserOrdersView, AddToCartView
 from . import views
 
 urlpatterns = [
+    path('orders/user/', UserOrdersView.as_view(), name='user_orders'),
+    path('order/last/', LastOrderView.as_view(), name='last_order'),
     path('create_order/', CreateOrderView.as_view(), name='create_order'),
     path('order/<int:order_id>/', OrderDetailView.as_view(), name='order_detail'),
-    path('cart/purchase/', PurchaseView.as_view(), name="cart-purchase"),
+    path('order/purchase/', PurchaseView.as_view(), name="order-purchase"),
     path('cart/', CartView.as_view(), name='cart'), 
-    path('cart/add/', CartView.as_view(), name='add_to_cart'),
+    path('cart/add/', AddToCartView.as_view(), name='add_to_cart'),
     path('albums/', views.album_list, name='album_list'),
     path('orders/all/', AllOrderView.as_view(), name='all-orders'),
     path('albums/by-letter/<str:letter>/', AlbumsByLetterView.as_view(), name='albums-by-letter'),
