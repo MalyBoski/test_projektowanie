@@ -1,9 +1,8 @@
 from django.contrib import admin
-from .models import CustomUser, Song, Album, Cart, Order, OrderAlbum
+from .models import CustomUser, Song, Album, Cart, Order
 from django.contrib.auth.admin import UserAdmin
 from django.contrib import admin
 from rest_framework.authtoken.models import Token
-
 class TokenAdmin(admin.ModelAdmin):
     list_display = ('key','pk', 'user_username', 'user_id', 'is_superuser', 'created')
 

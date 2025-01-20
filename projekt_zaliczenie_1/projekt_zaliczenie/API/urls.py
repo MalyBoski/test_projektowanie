@@ -12,13 +12,16 @@ urlpatterns = [
     path('cart/', CartView.as_view(), name='cart'), 
     path('cart/add/', AddToCartView.as_view(), name='add_to_cart'),
     path('albums/', views.album_list, name='album_list'),
-    path('orders/all/', AllOrderView.as_view(), name='all-orders'),
     path('albums/by-letter/<str:letter>/', AlbumsByLetterView.as_view(), name='albums-by-letter'),
-    path('songs/', SongList.as_view(), name='song-list'),
+    path('register/', RegisterView.as_view(), name='register'),
+    path('login/', CustomLoginView.as_view(), name='login'),
+    path('main/', main_page_view, name='main_page'),  
+    path('songs/', song_list_view, name='song_list'),
+    # Admin opcje
+    # Mozliwosc wybierania zamowien z okreslonej daty
+    # http://127.0.0.1:8000//API/orders/all/?start_date=rok-miesiac-dzien&end_date=rok-miesiac-dzien    (np. 2023-01-31)
+    path('orders/all/', AllOrderView.as_view(), name='all-orders'), 
     path('songs/create/', CreateSongView.as_view()),
     path('songs/<int:pk>/update/', UpdateASongView.as_view()),
     path('songs/<int:pk>/delete/', deleteSongView.as_view()),
-    path('songs/', SongViewSet.as_view({'get': 'list'})),
-    path('register/', RegisterView.as_view(), name='register'),
-    path('login/', CustomLoginView.as_view(), name='custom_login'),    
 ]

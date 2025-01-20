@@ -1,9 +1,9 @@
 from django.db import models
 from django.utils import timezone
 from django.utils.timezone import now
-from django.db.models import IntegerChoices
-from django.shortcuts import render
+# https://docs.djangoproject.com/en/5.1/topics/settings/
 from django.conf import settings 
+# https://docs.djangoproject.com/en/5.1/topics/auth/customizing/
 from django.contrib.auth.models import AbstractUser
 class Album(models.Model):
     title = models.CharField(max_length=100)

@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from rest_framework import generics, viewsets
-from.models import Song, Album, Cart, CustomUser, Order, OrderAlbum
+from.models import Song, Album, Cart, Order, OrderAlbum
 from.serializers import SongSerializer, CartSerializer, OrderSerializer
 from rest_framework import status
 from rest_framework.response import Response
@@ -10,15 +10,19 @@ from django.contrib.auth import authenticate
 from rest_framework.authtoken.models import Token
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.authentication import TokenAuthentication
-from django.http import JsonResponse
-from django.contrib.auth.decorators import login_required
-from django.http import HttpResponseForbidden, HttpResponse
+#https://docs.djangoproject.com/en/5.1/topics/auth/customizing/
 from django.contrib.auth import get_user_model
-from django.utils import timezone
 User = get_user_model()
+# https://docs.djangoproject.com/en/5.1/topics/i18n/timezones/
+from django.utils import timezone
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
+# https://docs.djangoproject.com/en/5.1/topics/http/shortcuts/
 from django.shortcuts import get_object_or_404
+# https://docs.djangoproject.com/en/2.2/_modules/django/utils/dateparse/
+from django.utils.dateparse import parse_date
 # Create your views here.
+
+# Wlasne wyswietlanie logowania wyrzucenie wiadomosci i tokenu po zalogowaniu
 class CustomLoginView(APIView):
     permission_classes = []
 
@@ -29,17 +33,13 @@ class CustomLoginView(APIView):
         user = authenticate(username=username, password=password)
         if user:
 
-            token, created = Token.objects.get_or_create(user=user)
-
-            songs = Song.objects.all()
-            songs_serializer = SongSerializer(songs, many=True)
+            token, created = Token.objects.get_or_create(user=user) 
 
             return Response({
                 "message": f"Witaj, {username}",
-                'songs': songs_serializer.data,
                 "token": token.key  }, status=200)
         return Response({"message": "Nieprawidłowe dane logowania"}, status=400)
-
+# Wyswietlanie rejestracji uzytkownika
 class RegisterView(APIView):
     permission_classes = []
     
@@ -52,18 +52,17 @@ class RegisterView(APIView):
               status=status.HTTP_201_CREATED
             )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+# Glowna strona z albumami
+class MainPageView(APIView):
+    permission_classes = []
     
-class SongViewSet(viewsets.ModelViewSet):
-    queryset = Song.objects.all()
-    serializer_class = SongSerializer
+def main_page_view(request):
+        albums = Album.objects.prefetch_related('song_set').all()
+        context = {'albums': albums}
+        return render(request, 'sklepmuzyczny/main_page.html', context)
 
-class SongList(generics.ListCreateAPIView):
-    queryset = Song.objects.all()
-    serializer_class = SongSerializer
-    model = Song
-    template_name = 'sklepmuzyczny/song_list.html'
-    context_object_name = 'songs'
 
+# Tworzenie piosenek
 class CreateSongView(APIView):
     permission_classes = [IsAdminUser]
     
@@ -73,7 +72,7 @@ class CreateSongView(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
+# Updateowanie piosenek 
 class UpdateASongView(APIView):
     permission_classes = [IsAdminUser]
     def put(self, request, pk):
@@ -86,7 +85,7 @@ class UpdateASongView(APIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Song.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
-        
+# Usuwanie piosenek
 class deleteSongView(APIView):
     permission_classes = [IsAdminUser]
     def delete(self, request, pk):
@@ -96,7 +95,7 @@ class deleteSongView(APIView):
             return Response({"message": "Pomyślnie usunięto utwór"}, status=204)
         except Song.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
-           
+# Wyswietlanie listy piosenek
 def song_list_view(request):
     songs = Song.objects.all()
     context = {'songs': songs}
@@ -107,7 +106,7 @@ def album_list(request):
     albums = Album.objects.all()
     return render(request, 'sklepmuzyczny/album_list.html', {'albums': albums})
 
-
+# Wyswietlanie albumow 
 class AlbumViewSet(viewsets.ModelViewSet):
     queryset = Album.objects.all()
     serializer_class = AlbumSerializer
@@ -115,7 +114,7 @@ class AlbumViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         return Album.objects.all()
-
+# Wyswietlanie koszyka
 class CartView(APIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
@@ -149,14 +148,7 @@ class AddToCartView(APIView):
         Cart.objects.create(user=user, album=album)
         return Response({"message": f"Album '{album.title}' został dodany do koszyka"}, status=201)
 
-
-class CartViewSet(viewsets.ModelViewSet):
-    queryset = Cart.objects.all()
-    serializer_class = CartSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        return Cart.objects.filter(user=self.request.user)
+# Wyswietlanie albumow po literze
 
 class AlbumsByLetterView(APIView):
     permission_classes = [IsAuthenticated]
@@ -166,44 +158,24 @@ class AlbumsByLetterView(APIView):
 
         data =[{"id": album.id, "title": album.title, "price": album.price} for album in albums]
         return Response(data, status=200) 
-
+# Wyswietlanie wszystkich zamowien
 class AllOrderView(APIView):
-    permission_classes = [IsAdminUser]  
+    permission_classes = [IsAdminUser]
 
     def get(self, request):
-        orders = Order.objects.select_related('user').all()  
+        start_date = request.GET.get('start_date')
+        end_date = request.GET.get('end_date')
 
-        data = []
-        for order in orders:
-        
-            order_albums = order.orderalbum_set.select_related('album').all()
-            albums_data = [
-                {
-                    "album_title": order_album.album.title,
-                    "quantity": order_album.quantity,
-                    "price_per_item": float(order_album.album.price),
-                    "total_price": float(order_album.album.price * order_album.quantity),
-                }
-                for order_album in order_albums
-            ]
-            
-            
-            data.append({
-                "user": {
-                    "username": order.user.username, 
-                },
-                "order_id": order.id,
-                "status": order.get_status_display(),
-                "total_price": float(order.total_price),
-                "order_date": order.order_date.strftime("%Y-%m-%d %H:%M:%S"),
-                "shipping_address": order.shipping_address,
-                "albums": albums_data,
-            })
+        orders = Order.objects.select_related('user').all()
+        if start_date:
+            orders = orders.filter(order_date__gte=parse_date(start_date))
+        if end_date:
+            orders = orders.filter(order_date__lte=parse_date(end_date))
 
-        return Response(data, status=200)
+        return render(request, 'orders_list.html', {'orders': orders})
 
 
-
+# Wyswietlanie zamowienia
 class PurchaseView(APIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
@@ -258,13 +230,14 @@ class CreateOrderView(APIView):
         carts.delete()
 
         return Response({"message": "Zamówienie zostało utworzone", "order_id": order.id}, status=201)
-
+# Szczegoly zamowienia
 class OrderDetailView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, order_id):
         order = get_object_or_404(Order, id=order_id)
         return render(request, 'sklepmuzyczny/order_detail.html', {'order': order})
+# Wyswietlanie zamowien
 
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
