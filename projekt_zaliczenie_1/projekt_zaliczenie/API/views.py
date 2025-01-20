@@ -159,10 +159,10 @@ class CartView(APIView):
         return Response({"message": f"Dodano {album.title} do koszyka", "quantity": cart_item.quantity}, status=201)
 
     def get(self, request):
-        user = request.user  # Autoryzowany użytkownik
-        cart_items = Cart.objects.filter(user=user)  # Filtrujemy koszyk użytkownika
-        serializer = CartSerializer(cart_items, many=True)  # Serializujemy dane
-        return Response(serializer.data, status=200)  # Zwracamy dane koszyka
+        user = request.user 
+        cart_items = Cart.objects.filter(user=user)  
+        serializer = CartSerializer(cart_items, many=True)  
+        return Response(serializer.data, status=200)  
 
 
 def add_to_cart(request, album_id):
