@@ -13,7 +13,8 @@ from . import views
 urlpatterns = [
     #path('api/', include(router.urls)), #
     path('cart/', CartView.as_view(), name='cart'),
-    path('cart/add/<int:album_id>/', views.add_to_cart, name='add_to_cart'),
+    #path('cart/add/<int:album_id>/', views.add_to_cart, name='add_to_cart'), 
+    path('cart/add/', CartView.as_view(), name='add_to_cart'),
     path('albums/', views.album_list, name='album_list'),
     #path('', include(router.urls)), #
     path('songs/', SongList.as_view(), name='song-list'),

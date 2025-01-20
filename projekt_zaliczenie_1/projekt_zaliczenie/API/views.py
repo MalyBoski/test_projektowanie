@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect
 from rest_framework import generics, viewsets
-from.models import Song, Album, Cart
+from.models import Song, Album, Cart, CustomUser
 from.serializers import SongSerializer, CartSerializer
 from rest_framework import status
 from rest_framework.response import Response
@@ -9,16 +9,20 @@ from.serializers import SongSerializer, UserSerializer, AlbumSerializer
 from django.contrib.auth import authenticate
 from rest_framework.authtoken.models import Token
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
+from rest_framework.authentication import TokenAuthentication
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseForbidden
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 import logging
 logger = logging.getLogger(__name__)
 # Create your views here.
 class CustomLoginView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = []
 
     def post(self, request):
         username = request.data.get('username')
@@ -34,7 +38,8 @@ class CustomLoginView(APIView):
 
             return Response({
                 "message": f"Witaj, {username}",
-                'songs': songs_serializer.data
+                'songs': songs_serializer.data,
+                "token": token.key  # Include the token in the response
             }, status=200)
         return Response({"message": "Nieprawidłowe dane logowania"}, status=400)
 
@@ -75,6 +80,8 @@ class CreateSongView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class BuySongView(APIView):
+
+    permission_classes = []
     def get(self, request, pk):
         try:
             song = Song.objects.get(pk=pk)
@@ -84,6 +91,7 @@ class BuySongView(APIView):
             return Response(status=status.HTTP_404_NOT_FOUND)
 
 class UpdateASongView(APIView):
+    permission_classes = [IsAdminUser]
     def put(self, request, pk):
         try:
             song = Song.objects.get(pk=pk)
@@ -96,6 +104,7 @@ class UpdateASongView(APIView):
             return Response(status=status.HTTP_404_NOT_FOUND)
         
 class deleteSongView(APIView):
+    permission_classes = [IsAdminUser]
     def delete(self, request, pk):
         try:
             song = Song.objects.get(pk=pk)
@@ -125,22 +134,40 @@ class AlbumViewSet(viewsets.ModelViewSet):
         return Album.objects.all()
 
 class CartView(APIView):
+    authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
 
+    def post(self, request):
+        logger.info(f"Typ request.user: {type(request.user)}, Wartość: {request.user}")
+        
+        album_id = request.data.get('album_id')
+        if not album_id:
+            return Response({"error": "Album ID jest wymagane"}, status=400)
+
+        try:
+            album = Album.objects.get(id=album_id)
+        except Album.DoesNotExist:
+            return Response({"error": "Album nie istnieje"}, status=404)
+
+        # Użycie instancji request.user bez dodatkowego zapytania do bazy
+        cart_item, created = Cart.objects.get_or_create(user=request.user, album=album)
+        
+        if not created:
+            cart_item.quantity += 1
+            cart_item.save()
+
+        return Response({"message": f"Dodano {album.title} do koszyka", "quantity": cart_item.quantity}, status=201)
+
     def get(self, request):
-        if not request.user.is_authenticated:
-            return Response({"detail": "Użytkownik musi być zalogowany"}, status=401)
-
-        user = request.user
-        cart_items = Cart.objects.filter(user=user)
-        serializer = CartSerializer(cart_items, many=True)
-        return Response(serializer.data)
-
+        user = request.user  # Autoryzowany użytkownik
+        cart_items = Cart.objects.filter(user=user)  # Filtrujemy koszyk użytkownika
+        serializer = CartSerializer(cart_items, many=True)  # Serializujemy dane
+        return Response(serializer.data, status=200)  # Zwracamy dane koszyka
 
 
 def add_to_cart(request, album_id):
     album = Album.objects.get(id=album_id)
-    user = request.user
+    user = User.objects.get(username=request.user)
 
     cart_item, created = Cart.objects.get_or_create(user=user, album=album)
 
