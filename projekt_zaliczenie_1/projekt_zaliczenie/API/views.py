@@ -120,8 +120,7 @@ def song_list_view(request):
 
 def album_list(request):
     albums = Album.objects.all()
-    album_data = [{"id": album.id, "name": album.title, "artist": album.artist} for album in albums]
-    return JsonResponse(album_data, safe=False)
+    return render(request, 'sklepmuzyczny/album_list.html', {'albums': albums})
 
 
 class AlbumViewSet(viewsets.ModelViewSet):
@@ -217,3 +216,20 @@ class AllOrderView(APIView):
                 "total_price": cart.album.price * cart.quantity
             })
         return Response(data, status=200)
+
+class PurchaseView(APIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        cart_items = Cart.objects.filter(user=user)
+
+        if not cart_items.exists():
+            return Response({"error": "Koszyk jest pusty!"}, status=400)
+
+        total_price = sum(item.album.price * item.quantity for item in cart_items)
+
+        cart_items.delete()
+
+        return render(request, "sklepmuzyczny/thank_you.html", {"total_price": total_price})

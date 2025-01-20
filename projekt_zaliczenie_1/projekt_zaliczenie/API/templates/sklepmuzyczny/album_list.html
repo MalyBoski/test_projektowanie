@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista Albumów</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+        h1 {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>Lista Albumów</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>Tytuł</th>
+                <th>Wykonawca</th>
+                <th>Data wydania</th>
+                <th>Gatunek</th>
+                <th>Cena (zł)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for album in albums %}
+            <tr>
+                <td>{{ album.title }}</td>
+                <td>{{ album.artist }}</td>
+                <td>{{ album.release_date }}</td>
+                <td>{{ album.genre }}</td>
+                <td>{{ album.price }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5">Brak albumów do wyświetlenia.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>
