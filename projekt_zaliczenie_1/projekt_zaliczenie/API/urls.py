@@ -1,5 +1,5 @@
 from django.urls import path 
-from.views import CreateSongView, UpdateASongView, deleteSongView, RegisterView, CustomLoginView, CartView, AlbumsByLetterView, AllOrderView, PurchaseView, CreateOrderView, OrderDetailView, main_page_view, song_list_view, DlaBiedakow
+from.views import CreateSongView, UpdateASongView, deleteSongView, RegisterView, CustomLoginView, CartView, AlbumsByLetterView, AllOrderView, PurchaseView, CreateOrderView, OrderDetailView, main_page_view, song_list_view, DlaBiedakow, UserOrdersView, LastOrderView, AddToCartView
 from . import views
 
 urlpatterns = [

@@ -128,7 +128,7 @@ class CartView(APIView):
             "cart_items": [{"album": item.album.title, "price": item.album.price} for item in cart_items],
             "total_price": total_price
         }, status=200)
-    
+# Wyswietlanie dodawania do koszyka
 class AddToCartView(APIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
@@ -145,11 +145,30 @@ class AddToCartView(APIView):
         except Album.DoesNotExist:
             return Response({"error": "Nie znaleziono albumu"}, status=404)
 
-        Cart.objects.create(user=user, album=album)
-        return Response({"message": f"Album '{album.title}' został dodany do koszyka"}, status=201)
-            "cart_items": serializer.data,
+        cart_item, created = Cart.objects.get_or_create(user=user, album=album)
+
+        if not created:
+            cart_item.quantity += 1
+            cart_item.save()
+
+        cart_items = Cart.objects.filter(user=user)
+        total_cart_price = sum(item.album.price * item.quantity for item in cart_items)
+
+        cart_data = [
+            {
+                "album": item.album.title,
+                "price": item.album.price,
+                "quantity": item.quantity
+            }
+            for item in cart_items
+        ]
+
+        return Response({
+            "message": f"Album '{album.title}' został dodany do koszyka",
+            "cart_items": cart_data,
             "total_price": total_cart_price
-        }, status=200) 
+        }, status=200)
+
 
 # Dodawanie do koszyka
 def add_to_cart(request, name):
@@ -271,7 +290,7 @@ class OrderDetailView(APIView):
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
-
+# OSTATNIE ZAMOWIENIE
 class LastOrderView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -289,7 +308,7 @@ class LastOrderView(APIView):
             "order_date": last_order.order_date.strftime("%Y-%m-%d %H:%M:%S"),
             "shipping_address": last_order.shipping_address,
         }, status=200)
-    
+# USEROWE ZAMOWIENIE :O?
 class UserOrdersView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -310,4 +329,4 @@ class UserOrdersView(APIView):
             }
             for order in orders
         ]
-        return Response(data, status=200)
+        return Response(data, status=200)   
