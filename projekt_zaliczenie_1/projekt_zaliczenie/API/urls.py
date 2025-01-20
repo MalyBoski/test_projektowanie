@@ -1,6 +1,6 @@
 from django.urls import path, include
 from rest_framework.authtoken.views import obtain_auth_token
-from.views import SongList, CreateSongView, UpdateASongView, deleteSongView, SongViewSet, RegisterView, CustomLoginView, CartView, AlbumViewSet, AlbumsByLetterView, AllOrderView, PurchaseView, CreateOrderView, OrderDetailView, LastOrderView, UserOrdersView, AddToCartView
+from.views import main_page_view, CreateSongView, UpdateASongView, deleteSongView, song_list_view, RegisterView, CustomLoginView, CartView, AlbumViewSet, AlbumsByLetterView, AllOrderView, PurchaseView, CreateOrderView, OrderDetailView, LastOrderView, UserOrdersView, AddToCartView
 from . import views
 
 urlpatterns = [
