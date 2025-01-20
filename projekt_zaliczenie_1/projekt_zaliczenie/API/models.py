@@ -48,3 +48,7 @@ class Cart(models.Model):
     def total_cart_price(cls, user):
         carts = cls.objects.filter(user=user)
         return sum(cart.total_price() for cart in carts)
+
+
+#class Orders(models.Model)
+    #class Status(models.TextChoices):
