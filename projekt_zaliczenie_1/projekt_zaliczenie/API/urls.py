@@ -1,8 +1,9 @@
 from django.urls import path 
-from.views import CreateSongView, UpdateASongView, deleteSongView, RegisterView, CustomLoginView, CartView, AlbumsByLetterView, AllOrderView, PurchaseView, CreateOrderView, OrderDetailView, main_page_view, song_list_view, DlaBiedakow, UserOrdersView, LastOrderView, AddToCartView
+from.views import CreateSongView, UpdateASongView, deleteSongView, RegisterView, CustomLoginView, CartView, AlbumsByLetterView, AllOrderView, PurchaseView, CreateOrderView, OrderDetailView, main_page_view, song_list_view, DlaBiedakow, UserOrdersView, LastOrderView, AddToCartView, DeleteCartView
 from . import views
 
 urlpatterns = [
+    # Opcje dla uzytkownika 
     path('orders/user/', UserOrdersView.as_view(), name='user_orders'),
     path('order/last/', LastOrderView.as_view(), name='last_order'),
     path('create_order/', CreateOrderView.as_view(), name='create_order'),
@@ -10,6 +11,7 @@ urlpatterns = [
     path('order/purchase/', PurchaseView.as_view(), name="order-purchase"),
     path('cart/', CartView.as_view(), name='cart'), 
     path('cart/add/', AddToCartView.as_view(), name='add_to_cart'),
+    path('cart/delete/', DeleteCartView.as_view(), name='delete_from_cart'),
     path('albums/', views.album_list, name='album_list'),
     path('albums/by-letter/<str:letter>/', AlbumsByLetterView.as_view(), name='albums-by-letter'),
     path('register/', RegisterView.as_view(), name='register'),

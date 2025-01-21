@@ -5,12 +5,22 @@ from django.utils.timezone import now
 from django.conf import settings 
 # https://docs.djangoproject.com/en/5.1/topics/auth/customizing/
 from django.contrib.auth.models import AbstractUser
+from django.core.exceptions import ValidationError
+from datetime import timedelta
 class Album(models.Model):
     title = models.CharField(max_length=100)
     artist = models.CharField(max_length=100)
     release_date = models.DateField(default=now)
     genre = models.CharField(max_length=100)
-    price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00,)
+
+    def clean(self):
+        if self.price < 0:
+            raise ValidationError(f"Cena nie może być ujemna !!!!")
+            
+        max_date = now().date() +timedelta(days=180)
+        if self.release_date > max_date:
+            raise ValidationError(f"Data wydania albumu nie może być późniejsza niż {max_date}.")
     def __str__(self):
         return f"{self.title} by {self.artist}"
 
@@ -27,6 +37,11 @@ class Song(models.Model):
     album = models.ForeignKey(Album, on_delete=models.CASCADE, default=1)
     release_date = models.DateField()
     genre = models.CharField(max_length=100)
+
+    def clean(self):
+        max_date = now().date() +timedelta(days=180)
+        if self.release_date > max_date:
+            raise ValidationError(f"Data wydania piosenki nie może być późniejsza niż {max_date}.")
     def __str__(self):
         return self.title
     

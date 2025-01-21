@@ -8,7 +8,7 @@ from rest_framework.views import APIView
 from.serializers import SongSerializer, UserSerializer, AlbumSerializer
 from django.contrib.auth import authenticate
 from rest_framework.authtoken.models import Token
-from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
+from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly, IsAdminUser
 from rest_framework.authentication import TokenAuthentication
 #https://docs.djangoproject.com/en/5.1/topics/auth/customizing/
 from django.contrib.auth import get_user_model
@@ -168,8 +168,46 @@ class AddToCartView(APIView):
             "cart_items": cart_data,
             "total_price": total_cart_price
         }, status=200)
+class DeleteCartView(APIView):
+    def delete(self, request):
+        user = request.user
+        album_name = request.data.get("name")
 
+        if not album_name:
+            return Response({"error": "Nazwa albumu jest wymagana"}, status=400)
 
+        try: 
+            album = Album.objects.get(title=album_name)
+        except Album.DoesNotExist:
+            return Response({"error": "Nie znaleziono albumu"}, status=404 )
+        try:
+            cart_item = Cart.objects.get(user=user, album=album)
+            if cart_item.quantity > 1:
+                cart_item.quantity -= 1
+                cart_item.save()
+            else:
+                cart_item.delete()
+
+            cart_items = Cart.objects.filter(user=user)
+            total_cart_price = sum(item.album.price * item.quantity for item in cart_items)
+
+            cart_data = [
+                {
+                    "album": item.album.title,
+                    "price": item.album.price,
+                    "quantity": item.quantity
+                }
+                for item in cart_items
+            ]
+
+            return Response({
+                "message": f"Album '{album.title}' został usunięty z koszyka",
+                "cart_items": cart_data,
+                "total_price": total_cart_price
+            }, status=200)
+
+        except Cart.DoesNotExist:
+            return Response({"error": "Album nie znajduje się w koszyku"}, status=404)
 # Dodawanie do koszyka
 def add_to_cart(request, name):
     album = Album.objects.get(title=name)
@@ -280,7 +318,7 @@ class CreateOrderView(APIView):
         return Response({"message": "Zamówienie zostało utworzone", "order_id": order.id}, status=201)
 # Szczegoly zamowienia
 class OrderDetailView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminUser]
 
     def get(self, request, order_id):
         order = get_object_or_404(Order, id=order_id)
