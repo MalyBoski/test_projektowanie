@@ -1,4 +1,5 @@
 Mateusz Pawłowski
 Kacper Gilbas
+Temat: sklep muzyczny
 
-Temat: Temat: reddit o pilce noznej, sklep internetowy, gre karciana w stylu rpg, strona do oceniania zawodnikow po meczu, 
+CALY PROJEKT JEST NA BRANCHU LAB06!!!!!!!
